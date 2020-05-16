@@ -53,7 +53,7 @@ struct Vec(T, size_t size) {
 	}
 	
 	const
-	auto opBinary(string op, T)(T b) if (__traits(compiles, opBinaryImpl!op(this, b))){
+	auto opBinary(string op, T)(T b) {////if (__traits(compiles, opBinaryImpl!op(this, b))){
 		return opBinaryImpl!op(this, b);
 	}
 	const
@@ -72,10 +72,10 @@ auto vec(size_t size, T)(T data) {
 	return Vec!(T, size)(data);
 }
 
-T magnitudeSquared(T, size_t size)(in Vec!(T,size) v) {
+T magnitudeSquared(T, size_t size)(const Vec!(T,size) v) {
 	return v.data[].map!"a^^2".sum;
 }
-T magnitude(T, size_t size)(in Vec!(T,size) v) {
+T magnitude(T, size_t size)(const Vec!(T,size) v) {
 	return cast(T) sqrt(cast(real) v.magnitudeSquared);
 }
 void normalize(bool zero=true, T, size_t size)(Vec!(T,size) v) {
@@ -85,7 +85,7 @@ void normalize(bool zero=true, T, size_t size)(Vec!(T,size) v) {
 	else
 		this.data[] /= cast(T) sqrt(cast(real) ms);
 }
-Vec!(T,size) normalized(bool zero=true, T, size_t size)(in Vec!(T,size) v) {
+Vec!(T,size) normalized(bool zero=true, T, size_t size)(const Vec!(T,size) v) {
 	Vec!(T,size) n;
 	auto ms = v.magnitudeSquared;
 	if (zero && ms == 0)
@@ -100,21 +100,41 @@ Vec!(T,size) normalized(bool zero=true, T, size_t size)(in Vec!(T,size) v) {
 void invert(T, size_t size)(Vec!(T,size) v) {
 	v.data[] = -v.data[];
 }
-Vec!(T,size) inverse(T, size_t size)(in Vec!(T,size) v) {
+Vec!(T,size) inverse(T, size_t size)(constVec!(T,size) v) {
 	Vec!(T,size) n;
 	n.data[] = -v.data[];
 	return n;
 }
 
-auto cross(T, U)(in Vec!(T,3) a, in Vec!(U,3) b) {
+auto cross(T, U)(const Vec!(T,3) a, const Vec!(U,3) b) {
 	return Vec!(typeof(a[0]*b[0]),3)	( a.y * b.z - b.y * a.z
 		, a.z * b.x - b.z * a.x
 		, a.x * b.y - b.x * a.y
 		);
 }
-auto dot(T, U, size_t size)(in Vec!(T,size) a, in Vec!(U,size) b) if (size==2||size==3) {
+auto dot(T, U, size_t size)(const Vec!(T,size) a, const Vec!(U,size) b) if (size==2||size==3) {
 	return cast(typeof(a[0]*b[0])) zip(a.data[],b.data[]).map!"a[0]*a[1]".sum();// `cast` because sum will increase precision of type.
 }
+
+auto cross(T, U)(const Vec!(T,3) a, const U[3] b) {
+	return cross(a, Vec!(U,3)(b));
+}
+auto cross(T, U)(const T[3] a, const Vec!(U,3) b) {
+	return cross(Vec!(T,3)(a), b);
+}
+auto cross(T, U)(const T[3] a, const U[3] b) {
+	return cross(Vec!(T,3)(a), Vec!(U,3)(b));
+}
+auto dot(T, U, size_t size)(const Vec!(T,size) a, const U[size] b) if (size==2||size==3) {
+	return dot(a,Vec!(U,size)(b));
+}
+auto dot(T, U, size_t size)(const T[size] a, const Vec!(U,size) b) if (size==2||size==3) {
+	return dot(Vec!(T,size)(a),b);
+}
+auto dot(T, U, size_t size)(const T[size] a, const U[size] b) if (size==2||size==3) {
+	return dot(Vec!(T,size)(a),Vec!(U,size)(b));
+}
+
 auto abs(T, size_t size)(Vec!(T,size) v) {
 	alias NT = Unconst!(typeof(std.math.abs(rvalueOf!T)));
 	Vec!(NT, size) n;
@@ -130,24 +150,21 @@ if (isNumeric!T && isNumeric!U)
 {
 	alias NT = Unconst!(typeof(rvalueOf!T*rvalueOf!U));
 	Vec!(NT, size) n;
-	n.data[] = mixin("a.data[]"~op~"b.data[]");
+	static if (__traits(compiles, mixin("a.data[]"~op~"b.data[]")))
+		n.data[] = mixin("a.data[]"~op~"b.data[]");
+	else static foreach(i; 0..size)
+		n.data[i] = mixin("a.data[i]"~op~"b.data[i]");
 	return n;
 }
 auto opBinaryImpl(string op, size_t size,T,U)(const Vec!(T, size) a, const U[size] b) 
 if (isNumeric!T && isNumeric!U)
 {
-	alias NT = Unconst!(typeof(rvalueOf!T*rvalueOf!U));
-	Vec!(NT, size) n;
-	n.data[] = mixin("a.data[]"~op~"b[]");
-	return n;
+	return mixin("a"~op~"Vec!(U,size)(b)");
 }
 auto opBinaryImpl(string op, size_t size,T,U)(const T[size] a, const Vec!(U, size) b) 
 if (isNumeric!T && isNumeric!U)
 {
-	alias NT = Unconst!(typeof(rvalueOf!T*rvalueOf!U));
-	Vec!(NT, size) n;
-	n.data[] = mixin("a[]"~op~"b.data[]");
-	return n;
+	return mixin("Vec!(T,size)(a)"~op~"b");
 }
 
 auto opBinaryImpl(string op, size_t size,T,U)(const Vec!(T, size) a, const U b)
@@ -155,7 +172,7 @@ if (isNumeric!T && isNumeric!U)
 {
 	alias NT = Unconst!(typeof(rvalueOf!T*rvalueOf!U));
 	Vec!(NT, size) n;
-	n.data[] = mixin("a.data[]"~op~"b.repeat.take(size).array[]");
+	n.data[] = mixin("a.data[]"~op~"b");
 	return n;
 }
 
@@ -164,7 +181,7 @@ if (isNumeric!T && isNumeric!U)
 {
 	alias NT = Unconst!(typeof(rvalueOf!T*rvalueOf!U));
 	Vec!(NT, size) n;
-	n.data[] = mixin("a.repeat.take(size).array[]"~op~"b.data[]");
+	n.data[] = mixin("a"~op~"b.data[]");
 	return n;
 }
 
@@ -217,48 +234,34 @@ private {
 
 
 unittest {
+	import std.stdio;
 	void testOp(string op)() {
 		void testValues(A,B)(A a1, A a2, A a3, B b1, B b2, B b3) {
-			{
-				Vec!(A,3) a = [a1,a2,a3];
-				Vec!(B,3) b = [b1,b2,b3];
-				static assert(is(typeof(mixin("a"~op~"b")) == Vec!(typeof(a1+b1),3)));
-				assert(mixin("a"~op~"b")== vec([mixin("a1"~op~"b1"),mixin("a2"~op~"b2"),mixin("a3"~op~"b3")]));
-				static if(op=="*") {
-					static assert(is(typeof(cross(a,b)) == Vec!(typeof(a1+b1),3)));
-					static assert(is(typeof(dot(a,b)) == typeof(a1+b1)));
+			void testConst(bool aConst, bool bConst)() {
+				void testTypes(AT, BT)() {
+					static if (aConst)
+						const AT a = [a1,a2,a3];
+					else
+						AT a = [a1,a2,a3];
+					static if (bConst)
+						const BT b = [b1,b2,b3];
+					else
+						BT b = [b1,b2,b3];
+					static assert(is(typeof(mixin("a"~op~"b")) == Vec!(typeof(a1+b1),3)));
+					assert(mixin("a"~op~"b")== vec([mixin("a1"~op~"b1"),mixin("a2"~op~"b2"),mixin("a3"~op~"b3")]));
+					static if(op=="*") {
+						static assert(is(typeof(cross(a,b)) == Vec!(typeof(a1*b1),3)));
+						static assert(is(typeof(dot(a,b)) == typeof(a1*b1)));
+					}
 				}
+				testTypes!(Vec!(A,3), Vec!(B,3));
+				testTypes!(Vec!(A,3), B[3]);
+				testTypes!(A[3], Vec!(B,3));
 			}
-			{
-				const Vec!(A,3) a = [a1,a2,a3];
-				const Vec!(B,3) b = [b1,b2,b3];
-				static assert(is(typeof(mixin("a"~op~"b")) == Vec!(typeof(a1+b1),3)));
-				assert(mixin("a"~op~"b") == vec([mixin("a1"~op~"b1"),mixin("a2"~op~"b2"),mixin("a3"~op~"b3")]));
-				static if(op=="*") {
-					static assert(is(typeof(cross(a,b)) == Vec!(typeof(a1+b1),3)));
-					static assert(is(typeof(dot(a,b)) == typeof(a1+b1)));
-				}
-			}
-			{
-				const Vec!(A,3) a = [a1,a2,a3];
-				Vec!(B,3) b = [b1,b2,b3];
-				static assert(is(typeof(mixin("a"~op~"b")) == Vec!(typeof(a1+b1),3)));
-				assert(mixin("a"~op~"b") == vec([mixin("a1"~op~"b1"),mixin("a2"~op~"b2"),mixin("a3"~op~"b3")]));
-				static if(op=="*") {
-					static assert(is(typeof(cross(a,b)) == Vec!(typeof(a1+b1),3)));
-					static assert(is(typeof(dot(a,b)) == typeof(a1+b1)));
-				}
-			}
-			{
-				Vec!(A,3) a = [a1,a2,a3];
-				const Vec!(B,3) b = [b1,b2,b3];
-				static assert(is(typeof(mixin("a"~op~"b")) == Vec!(typeof(a1+b1),3)));
-				assert(mixin("a"~op~"b") == vec([mixin("a1"~op~"b1"),mixin("a2"~op~"b2"),mixin("a3"~op~"b3")]));
-				static if(op=="*") {
-					static assert(is(typeof(cross(a,b)) == Vec!(typeof(a1+b1),3)));
-					static assert(is(typeof(dot(a,b)) == typeof(a1+b1)));
-				}
-			}
+			testConst!(false,false);
+			testConst!(true,true);
+			testConst!(true,false);
+			testConst!(false,true);
 		}
 		testValues!(int,int)(1,2,3,2,3,4);
 		testValues!(float,float)(1.5,2.5,3,2.5,3,4.5);
