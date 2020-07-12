@@ -91,7 +91,7 @@ Vec!(T,size) normalized(bool zero=true, T, size_t size)(const Vec!(T,size) v) {
 	if (zero && ms == 0)
 		n.data[] = 0;
 	else
-		n.data[] = this.data[] / cast(T) sqrt(cast(real) ms);
+		n.data[] = v.data[] / cast(T) sqrt(cast(real) ms);
 	return n;
 }
 
