@@ -5,7 +5,7 @@ import math.linear.vector: Vec;
 // TODO: Add tests to ensure T is a compotable type (number or vector, etc...).
 struct Point(T) {
 	union {
-	T vector;
+		T vector;
 		struct {
 			static if (T.data.length>=1)
 				T x;
@@ -15,12 +15,12 @@ struct Point(T) {
 				T z;
 			static if (T.data.length>=4)
 				T w;
-	}
+		}
 	}
 	alias v = vector;
 	
 	const
-	auto opBinary(string op, T)(T b) {////if (__traits(compiles, opBinaryImpl!op(this, b))){
+	auto opBinary(string op, T)(T b) if (__traits(compiles, opBinaryImpl!op(this, b))){
 		return opBinaryImpl!op(this, b);
 	}
 	const
