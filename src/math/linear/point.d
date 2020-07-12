@@ -4,7 +4,19 @@ import math.linear.vector: Vec;
 
 // TODO: Add tests to ensure T is a compotable type (number or vector, etc...).
 struct Point(T) {
+	union {
 	T vector;
+		struct {
+			static if (T.data.length>=1)
+				T x;
+			static if (T.data.length>=2)
+				T y;
+			static if (T.data.length>=3)
+				T z;
+			static if (T.data.length>=4)
+				T w;
+	}
+	}
 	alias v = vector;
 	
 	const
