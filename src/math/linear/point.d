@@ -49,15 +49,6 @@ if	(/*** __traits(compiles, mixin("a.vector"~op~"b"))
 	return point(mixin("a.vector"~op~"b"));
 }
 
-
-
-auto opOpAssignImpl(string op:"-", T,U)(ref P!T a, const P!U b) 
-if	( __traits(compiles, mixin("a.vector"~op~"=b.vector"))
-	)
-{
-	mixin("a.vector"~op~"=b.vector;");
-	return a;
-}
 auto opOpAssignImpl(string op, T,U)(ref P!T a, const U b) 
 if	( __traits(compiles, mixin("a.vector"~op~"=b"))
 	&& (op=="-" || op=="+")
