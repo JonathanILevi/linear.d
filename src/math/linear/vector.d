@@ -122,24 +122,25 @@ auto dot(T, U, size_t size)(const Vec!(T,size) a, const Vec!(U,size) b) if (size
 	return cast(typeof(a[0]*b[0])) zip(a.data[],b.data[]).map!"a[0]*a[1]".sum();// `cast` because sum will increase precision of type.
 }
 
-auto cross(T, U)(const Vec!(T,3) a, const U[3] b) {
-	return cross(a, Vec!(U,3)(b));
-}
-auto cross(T, U)(const T[3] a, const Vec!(U,3) b) {
-	return cross(Vec!(T,3)(a), b);
-}
-auto cross(T, U)(const T[3] a, const U[3] b) {
-	return cross(Vec!(T,3)(a), Vec!(U,3)(b));
-}
-auto dot(T, U, size_t size)(const Vec!(T,size) a, const U[size] b) if (size==2||size==3) {
-	return dot(a,Vec!(U,size)(b));
-}
-auto dot(T, U, size_t size)(const T[size] a, const Vec!(U,size) b) if (size==2||size==3) {
-	return dot(Vec!(T,size)(a),b);
-}
-auto dot(T, U, size_t size)(const T[size] a, const U[size] b) if (size==2||size==3) {
-	return dot(Vec!(T,size)(a),Vec!(U,size)(b));
-}
+
+////auto cross(T, U)(const Vec!(T,3) a, const U[3] b) {
+////	return cross(a, Vec!(U,3)(b));
+////}
+////auto cross(T, U)(const T[3] a, const Vec!(U,3) b) {
+////	return cross(Vec!(T,3)(a), b);
+////}
+////auto cross(T, U)(const T[3] a, const U[3] b) {
+////	return cross(Vec!(T,3)(a), Vec!(U,3)(b));
+////}
+////auto dot(T, U, size_t size)(const Vec!(T,size) a, const U[size] b) if (size==2||size==3) {
+////	return dot(a,Vec!(U,size)(b));
+////}
+////auto dot(T, U, size_t size)(const T[size] a, const Vec!(U,size) b) if (size==2||size==3) {
+////	return dot(Vec!(T,size)(a),b);
+////}
+////auto dot(T, U, size_t size)(const T[size] a, const U[size] b) if (size==2||size==3) {
+////	return dot(Vec!(T,size)(a),Vec!(U,size)(b));
+////}
 
 auto abs(T, size_t size)(Vec!(T,size) v) {
 	alias NT = Unconst!(typeof(std.math.abs(rvalueOf!T)));
