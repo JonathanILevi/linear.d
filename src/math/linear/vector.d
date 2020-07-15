@@ -95,6 +95,9 @@ Vec!(T,size) normalized(bool zero=true, T, size_t size)(const Vec!(T,size) v) {
 	return n;
 }
 
+auto rotate(T, U)(Vec!(T,2) v, U a) {
+	return vec(v.x * a.cos - v.y * a.sin, v.x * a.sin - v.y * a.cos);
+}
 
 
 void invert(T, size_t size)(Vec!(T,size) v) {
@@ -111,6 +114,9 @@ auto cross(T, U)(const Vec!(T,3) a, const Vec!(U,3) b) {
 		, a.z * b.x - b.z * a.x
 		, a.x * b.y - b.x * a.y
 		);
+}
+auto cross(T, U)(const Vec!(T,2) a, const Vec!(U,2) b) {
+	return a.x * b.y - b.x * a.y;
 }
 auto dot(T, U, size_t size)(const Vec!(T,size) a, const Vec!(U,size) b) if (size==2||size==3) {
 	return cast(typeof(a[0]*b[0])) zip(a.data[],b.data[]).map!"a[0]*a[1]".sum();// `cast` because sum will increase precision of type.
