@@ -1,6 +1,7 @@
 module math.linear.point;
 
 import math.linear.vector: Vec;
+import vector_ = math.linear.vector;
 
 // TODO: Add tests to ensure T is a compotable type (number or vector, etc...).
 struct Point(T) {
@@ -8,16 +9,21 @@ struct Point(T) {
 		T vector;
 		struct {
 			static if (T.data.length>=1)
-				T x;
+				T.Type x;
 			static if (T.data.length>=2)
-				T y;
+				T.Type y;
 			static if (T.data.length>=3)
-				T z;
+				T.Type z;
 			static if (T.data.length>=4)
-				T w;
+				T.Type w;
 		}
 	}
 	alias v = vector;
+	
+	const
+	auto castType(NT)() {
+		return point(vector.castType!NT);
+	}
 	
 	const
 	auto opBinary(string op, T)(T b) if (__traits(compiles, opBinaryImpl!op(this, b))){
@@ -39,6 +45,10 @@ auto pvec(T, size_t size)(T[size] data ...) {
 }
 auto pvec(size_t size, T)(T data) {
 	return point(Vec!(T, size)(data));
+}
+
+auto distance(T, U, size_t size)(Point!(Vec!(T,size)) v, Point!(Vec!(U,size)) w) {
+	return vector_.distance(v.vector, w.vector);
 }
 
 alias P = Point;

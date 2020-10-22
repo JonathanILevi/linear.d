@@ -14,6 +14,7 @@ alias Vec3(T) = Vec!(T, 3);
 alias Vec4(T) = Vec!(T, 4);
 // TODO: Add tests to ensure T is a compotable type (number, etc...).
 struct Vec(T, size_t size) {
+	alias Type = T;
 	union {
 		T[size] data;
 		struct {
@@ -60,10 +61,13 @@ struct Vec(T, size_t size) {
 	auto opBinaryRight(string op, T)(T a) if (__traits(compiles, opBinaryImpl!op(a, this))){
 		return opBinaryImpl!op(a,this);
 	}
-	auto opOpAssign(string op, T)(T b) if (__traits(compiles, opOpAssignImpl!op(this, b))){
+	auto opOpAssign(string op, T)(T b) {////if (__traits(compiles, opOpAssignImpl!op(this, b))){
 		return opOpAssignImpl!op(this, b);
 	}
 	
+	auto map(funs...)() {
+		return vec(data[].map!funs.array[0..size]);
+	}
 }
 auto vec(T, size_t size)(T[size] data ...) {
 	return Vec!(T, size)(data);
@@ -96,7 +100,7 @@ Vec!(T,size) normalized(bool zero=true, T, size_t size)(const Vec!(T,size) v) {
 }
 
 auto rotate(T, U)(Vec!(T,2) v, U a) {
-	return vec(v.x * a.cos - v.y * a.sin, v.x * a.sin - v.y * a.cos);
+	return vec(v.x * a.cos - v.y * a.sin, v.x * a.sin + v.y * a.cos);
 }
 
 
@@ -153,9 +157,9 @@ auto distance(T, U, size_t size)(Vec!(T,size) v, Vec!(U,size) w) {
 }
 
 auto opBinaryImpl(string op, size_t size,T,U)(const Vec!(T, size) a, const Vec!(U, size) b) 
-if (isNumeric!T && isNumeric!U)
+if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
 {
-	alias NT = Unconst!(typeof(rvalueOf!T*rvalueOf!U));
+	alias NT = Unconst!(typeof(mixin("rvalueOf!T"~op~"rvalueOf!U")));
 	Vec!(NT, size) n;
 	static if (__traits(compiles, mixin("a.data[]"~op~"b.data[]")))
 		n.data[] = mixin("a.data[]"~op~"b.data[]");
@@ -164,27 +168,30 @@ if (isNumeric!T && isNumeric!U)
 	return n;
 }
 auto opBinaryImpl(string op, size_t size,T,U)(const Vec!(T, size) a, const U[size] b) 
-if (isNumeric!T && isNumeric!U)
+if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
 {
 	return mixin("a"~op~"Vec!(U,size)(b)");
 }
 auto opBinaryImpl(string op, size_t size,T,U)(const T[size] a, const Vec!(U, size) b) 
-if (isNumeric!T && isNumeric!U)
+if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
 {
 	return mixin("Vec!(T,size)(a)"~op~"b");
 }
 
 auto opBinaryImpl(string op, size_t size,T,U)(const Vec!(T, size) a, const U b)
-if (isNumeric!T && isNumeric!U)
+if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
 {
-	alias NT = Unconst!(typeof(rvalueOf!T*rvalueOf!U));
+	alias NT = Unconst!(typeof(mixin("rvalueOf!T"~op~"rvalueOf!U")));
 	Vec!(NT, size) n;
-	n.data[] = mixin("a.data[]"~op~"b");
+	static if (__traits(compiles, mixin("a.data[]"~op~"b")))
+		n.data[] = mixin("a.data[]"~op~"b");
+	else static foreach(i; 0..size)
+		n.data[i] = mixin("a.data[i]"~op~"b");
 	return n;
 }
 
 auto opBinaryImpl(string op, size_t size,T,U)(const T a, const Vec!(U, size) b) 
-if (isNumeric!T && isNumeric!U)
+if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")) && !__traits(compiles, mixin("opBinaryImpl!\""~op~"\"(rvalueOf!T, rvalueOf!U)")))
 {
 	alias NT = Unconst!(typeof(rvalueOf!T*rvalueOf!U));
 	Vec!(NT, size) n;
@@ -198,21 +205,30 @@ if (isNumeric!T && isNumeric!U)
 
 
 auto opOpAssignImpl(string op, size_t size,T,U)(ref Vec!(T, size) a, const Vec!(U, size) b) 
-if (isNumeric!T && isNumeric!U)
+if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
 {
-	mixin("a.data[]"~op~"=b.data[];");
+	static if(__traits(compiles,mixin("a.data[]"~op~"=b.data[];")))
+		mixin("a.data[]"~op~"=b.data[];");
+	else static foreach(i; 0..size)
+		mixin("a.data[i]"~op~"=b.data[i];");
 	return a;
 }
 auto opOpAssignImpl(string op, size_t size,T,U)(ref Vec!(T, size) a, const U[size] b) 
-if (isNumeric!T && isNumeric!U)
+if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
 {
-	mixin("a.data[]"~op~"=b[];");
+	static if(__traits(compiles,mixin("a.data[]"~op~"=b[];")))
+		mixin("a.data[]"~op~"=b[];");
+	else static foreach(i; 0..size)
+		mixin("a.data[i]"~op~"=b[i];");
 	return a;
 }
 auto opOpAssignImpl(string op, size_t size,T,U)(ref Vec!(T, size) a, const U b) 
-if (isNumeric!T && isNumeric!U)
+if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
 {
-	mixin("a.data[]"~op~"=b;");
+	static if(__traits(compiles,mixin("a.data[]"~op~"=b;")))
+		mixin("a.data[]"~op~"=b;");
+	else static foreach(i; 0..size)
+		mixin("a.data[i]"~op~"=b;");
 	return a;
 }
 
