@@ -76,6 +76,12 @@ auto vec(size_t size, T)(T data) {
 	return Vec!(T, size)(data);
 }
 
+template vecMap(funs...) {
+	auto vecMap(T, size_t size)(Vec!(T, size) v) {
+		return vec(v.data[].map!funs.array[0..size]);
+	}
+}
+
 T magnitudeSquared(T, size_t size)(const Vec!(T,size) v) {
 	return v.data[].map!"a^^2".sum;
 }
