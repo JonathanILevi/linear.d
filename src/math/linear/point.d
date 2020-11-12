@@ -26,7 +26,7 @@ struct Point(T) {
 	}
 	
 	const
-	auto opBinary(string op, T)(T b) if (__traits(compiles, opBinaryImpl!op(this, b))){
+	auto opBinary(string op, T)(T b) {////if (__traits(compiles, opBinaryImpl!op(this, b))){
 		return opBinaryImpl!op(this, b);
 	}
 	const
@@ -58,14 +58,14 @@ alias PVec3(T) = P!(Vec!(T, 3));
 alias PVec4(T) = P!(Vec!(T, 4));
 
 auto opBinaryImpl(string op:"-", T,U)(const P!T a, const P!U b) 
-if	( __traits(compiles, mixin("a.vector"~op~"b.vector"))
-	)
+////if	( __traits(compiles, mixin("a.vector"~op~"b.vector"))
+////	)
 {
 	return mixin("a.vector"~op~"b.vector");
 }
 auto opBinaryImpl(string op, T,U)(const P!T a, const U b) 
-if	(/*** __traits(compiles, mixin("a.vector"~op~"b"))
-	&& */(op=="-" || op=="+")
+if	(__traits(compiles, mixin("a.vector"~op~"b"))
+	&& (op=="-" || op=="+")
 	)
 {
 	return point(mixin("a.vector"~op~"b"));
