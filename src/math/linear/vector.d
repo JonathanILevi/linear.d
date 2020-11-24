@@ -6,6 +6,7 @@ import std.traits;
 import std.math;
 import std.range;
 import std.algorithm;
+import std.functional;
 
 public import math.linear._qv;
 
@@ -68,6 +69,11 @@ struct Vec(T, size_t size) {
 	auto map(funs...)() {
 		return vec(data[].map!funs.array[0..size]);
 	}
+	
+	const nothrow pure @nogc @safe
+	size_t toHash() {
+		return data.hashOf;
+	}
 }
 auto vec(T, size_t size)(T[size] data ...) {
 	return Vec!(T, size)(data);
@@ -78,7 +84,11 @@ auto vec(size_t size, T)(T data) {
 
 template vecMap(funs...) {
 	auto vecMap(T, size_t size)(Vec!(T, size) v) {
-		return vec(v.data[].map!funs.array[0..size]);
+		Vec!(typeof(rvalueOf!T.pipe!funs), size) n;
+		static foreach(i; 0..size) {
+			n.data[i] = v[i].pipe!funs;
+		}
+		return n;
 	}
 }
 
