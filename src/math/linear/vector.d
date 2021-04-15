@@ -56,11 +56,17 @@ struct Vec(T, size_t size) {
 	
 	const
 	auto opBinary(string op, T)(T b) {////if (__traits(compiles, opBinaryImpl!op(this, b))){
-		return opBinaryImpl!op(this, b);
+		static if (__traits(compiles, opBinaryImpl!op(this, b)))
+			return opBinaryImpl!op(this, b);
+		else
+			return opBinaryImpl1!op(this, b);
 	}
 	const
-	auto opBinaryRight(string op, T)(T a) if (__traits(compiles, opBinaryImpl!op(a, this))){
-		return opBinaryImpl!op(a,this);
+	auto opBinaryRight(string op, T)(T a) if (__traits(compiles, opBinaryImpl!op(a, this)) || __traits(compiles, opBinaryImpl1!op(a, this))){
+		static if (__traits(compiles, opBinaryImpl!op(a,this)))
+			return opBinaryImpl!op(a,this);
+		else
+			return opBinaryImpl1!op(a,this);
 	}
 	auto opOpAssign(string op, T)(T b) {////if (__traits(compiles, opOpAssignImpl!op(this, b))){
 		return opOpAssignImpl!op(this, b);
@@ -194,7 +200,7 @@ if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
 	return mixin("Vec!(T,size)(a)"~op~"b");
 }
 
-auto opBinaryImpl(string op, size_t size,T,U)(const Vec!(T, size) a, const U b)
+auto opBinaryImpl1(string op, size_t size,T,U)(const Vec!(T, size) a, const U b)
 if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
 {
 	alias NT = Unconst!(typeof(mixin("rvalueOf!T"~op~"rvalueOf!U")));
@@ -206,7 +212,7 @@ if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
 	return n;
 }
 
-auto opBinaryImpl(string op, size_t size,T,U)(const T a, const Vec!(U, size) b) 
+auto opBinaryImpl1(string op, size_t size,T,U)(const T a, const Vec!(U, size) b) 
 if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")) && !__traits(compiles, mixin("opBinaryImpl!\""~op~"\"(rvalueOf!T, rvalueOf!U)")))
 {
 	alias NT = Unconst!(typeof(rvalueOf!T*rvalueOf!U));
