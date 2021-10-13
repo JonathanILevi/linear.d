@@ -259,17 +259,17 @@ if (__traits(compiles, mixin("lvalueOf!T"~op~"=rvalueOf!U")) && !(isIntegral!T &
 
 
 private {
-	NT[] arrayCast(NT,OT)(OT[] xs) {
+	inout (NT[]) arrayCast(NT,OT)(inout OT[] xs) {
 		NT[] nxs = new NT[xs.length];
 		foreach (i,e; xs) {
-			nxs[i] = cast(NT) e;
+			nxs[i] = cast(inout NT) e;
 		}
 		return nxs;
 	}
-	NT[L] arrayCast(NT,OT,size_t L)(OT[L] xs) {
+	inout(NT[L]) arrayCast(NT,OT,size_t L)(inout OT[L] xs) {
 		NT[L] nxs;
 		foreach (i,e; xs) {
-			nxs[i] = cast(NT) e;
+			nxs[i] = cast(inout NT) e;
 		}
 		return nxs;
 	}
