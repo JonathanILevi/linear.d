@@ -227,7 +227,7 @@ if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")) && !__traits(compile
 
 
 auto opOpAssignImpl(string op, size_t size,T,U)(ref Vec!(T, size) a, const Vec!(U, size) b) 
-if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
+if (__traits(compiles, mixin("lvalueOf!T"~op~"=rvalueOf!U")) && !(isIntegral!T && isFloatingPoint!U))
 {
 	static if(__traits(compiles,mixin("a.data[]"~op~"=b.data[];")))
 		mixin("a.data[]"~op~"=b.data[];");
@@ -236,7 +236,7 @@ if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
 	return a;
 }
 auto opOpAssignImpl(string op, size_t size,T,U)(ref Vec!(T, size) a, const U[size] b) 
-if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
+if (__traits(compiles, mixin("lvalueOf!T"~op~"=rvalueOf!U")) && !(isIntegral!T && isFloatingPoint!U))
 {
 	static if(__traits(compiles,mixin("a.data[]"~op~"=b[];")))
 		mixin("a.data[]"~op~"=b[];");
@@ -245,7 +245,7 @@ if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
 	return a;
 }
 auto opOpAssignImpl(string op, size_t size,T,U)(ref Vec!(T, size) a, const U b) 
-if (__traits(compiles, mixin("rvalueOf!T"~op~"rvalueOf!U")))
+if (__traits(compiles, mixin("lvalueOf!T"~op~"=rvalueOf!U")) && !(isIntegral!T && isFloatingPoint!U))
 {
 	static if(__traits(compiles,mixin("a.data[]"~op~"=b;")))
 		mixin("a.data[]"~op~"=b;");
